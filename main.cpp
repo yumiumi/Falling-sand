@@ -18,8 +18,6 @@ void init_field() {
 			field[y][x].is_updated = false;
 		}
 	}
-	//field[0][0].type = SAND;
-	//field[0][9].type = SAND;
 }
 
 void block_physics(Cell* block) {
@@ -45,124 +43,52 @@ void block_physics(Cell* block) {
 	}
 }
 
-void can_place(int x, int y, Cell* block) {
-	// [0] (x, y)
-	if (y < 0 || y >= f_h || x < 0 || x >= f_w) {
-		block[0].type = BORDER;
-	}
-	else {
-		block[0].type = field[y][x].type;
-	}
+bool is_valid(int x, int y) {
+	return y >= 0 && y < f_h && x >= 0 && x < f_w;
+}
 
-	// [1] (y + 1, x)
-	if (y + 1 < 0 || y + 1 >= f_h || x < 0 || x >= f_w) {
-		block[1].type = BORDER;
+Cell_Type get_if_valid(int x, int y) {
+	if (is_valid(x, y)) {
+		return field[y][x].type;
 	}
 	else {
-		block[1].type = field[y + 1][x].type;
+		return BORDER;
 	}
+}
 
-	// [2] (y, x + 1) 
-	if (y < 0 || y >= f_h || x + 1 < 0 || x + 1 >= f_w) {
-		block[2].type = BORDER;
-	}
-	else {
-		block[2].type = field[y][x + 1].type;
-	}
+void classify_block(int x, int y, Cell* block) {
+	block[0].type = get_if_valid(x + 0, y + 0);
+	block[1].type = get_if_valid(x + 0, y + 1);
+	block[2].type = get_if_valid(x + 1, y + 0);
+	block[3].type = get_if_valid(x + 1, y + 1);
+}
 
-	// [3] (y + 1, x + 1)
-	if (y + 1 < 0 || y + 1 >= f_h || x + 1 < 0 || x + 1 >= f_w) {
-		block[3].type = BORDER;
+void save_if_valid(Cell_Type type, int x, int y) {
+	if (is_valid(x, y)) {
+		field[y][x].type = type;
 	}
-	else {
-		block[3].type = field[y + 1][x + 1].type;
+}
+
+void run_block_pass(int start_x, int start_y) {
+	for (int y = start_y; y < f_h; y += 2) {
+		for (int x = start_x; x < f_w; x += 2) {
+			Cell block[4];
+			classify_block(x, y, block);
+			block_physics(block);
+
+			save_if_valid(block[0].type, x + 0, y + 0);
+			save_if_valid(block[1].type, x + 0, y + 1);
+			save_if_valid(block[2].type, x + 1, y + 0);
+			save_if_valid(block[3].type, x + 1, y + 1);
+		}
 	}
 }
 
 void bc_automaton() {
-	Cell block[4];
-	//1
-	for (int y = 0; y < f_h; y += 2) {
-		for (int x = 0; x < f_w; x += 2) {
-			can_place(x, y, block);
-			block_physics(block);
-			if (y >= 0 && y < f_h && x >= 0 && x < f_w) {
-				field[y][x].type = block[0].type;
-			}
-			if (y + 1 >= 0 && y + 1 < f_h && x >= 0 && x < f_w) {
-				field[y + 1][x].type = block[1].type;
-			}
-			if (y >= 0 && y < f_h && x + 1 >= 0 && x + 1 < f_w) {
-				field[y][x + 1].type = block[2].type;
-			}
-			if (y + 1 >= 0 && y + 1 < f_h && x + 1 >= 0 && x + 1 < f_w) {
-				field[y + 1][x + 1].type = block[3].type;
-			}
-		}
-	}
-	//2
-	for (int y = 0; y < f_h + 1; y += 2) {
-		for (int x = 0; x < f_w + 1; x += 2) {
-			int y2 = y;
-			int x2 = x + 1;
-			can_place(x2, y2, block);
-			block_physics(block);
-			if (y2 >= 0 && y2 < f_h && x2 >= 0 && x2 < f_w) {
-				field[y2][x2].type = block[0].type;
-			}
-			if (y2 + 1 >= 0 && y2 + 1 < f_h && x2 >= 0 && x2 < f_w) {
-				field[y2 + 1][x2].type = block[1].type;
-			}
-			if (y2 >= 0 && y2 < f_h && x2 + 1 >= 0 && x2 + 1 < f_w) {
-				field[y2][x2 + 1].type = block[2].type;
-			}
-			if (y2 + 1 >= 0 && y2 + 1 < f_h && x2 + 1 >= 0 && x2 + 1 < f_w) {
-				field[y2 + 1][x2 + 1].type = block[3].type;
-			}
-		}
-	}
-	//3
-	for (int y = 0; y < f_h + 1; y += 2) {
-		for (int x = 0; x < f_w + 1; x += 2) {
-			int y3 = y + 1;
-			int x3 = x;
-			can_place(x3, y3, block);
-			block_physics(block);
-			if (y3 >= 0 && y3 < f_h && x3 >= 0 && x3 < f_w) {
-				field[y3][x3].type = block[0].type;
-			}
-			if (y3 + 1 >= 0 && y3 + 1 < f_h && x3 >= 0 && x3 < f_w) {
-				field[y3 + 1][x3].type = block[1].type;
-			}
-			if (y3 >= 0 && y3 < f_h && x3 + 1 >= 0 && x3 + 1 < f_w) {
-				field[y3][x3 + 1].type = block[2].type;
-			}
-			if (y3 + 1 >= 0 && y3 + 1 < f_h && x3 + 1 >= 0 && x3 + 1 < f_w) {
-				field[y3 + 1][x3 + 1].type = block[3].type;
-			}
-		}
-	}
-	//4
-	for (int y = 0; y < f_h + 1; y += 2) {
-		for (int x = 0; x < f_w + 1; x += 2) {
-			int y4 = y + 1;
-			int x4 = x + 1;
-			can_place(x4, y4, block);
-			block_physics(block);
-			if (y4 >= 0 && y4 < f_h && x4 >= 0 && x4 < f_w) {
-				field[y4][x4].type = block[0].type;
-			}
-			if (y4 + 1 >= 0 && y4 + 1 < f_h && x4 >= 0 && x4 < f_w) {
-				field[y4 + 1][x4].type = block[1].type;
-			}
-			if (y4 >= 0 && y4 < f_h && x4 + 1 >= 0 && x4 + 1 < f_w) {
-				field[y4][x4 + 1].type = block[2].type;
-			}
-			if (y4 + 1 >= 0 && y4 + 1 < f_h && x4 + 1 >= 0 && x4 + 1 < f_w) {
-				field[y4 + 1][x4 + 1].type = block[3].type;
-			}
-		}
-	}
+	run_block_pass(0, 0);
+	run_block_pass(1, 0);
+	run_block_pass(0, 1);
+	run_block_pass(1, 1);
 }
 
 void draw() {
