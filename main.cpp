@@ -21,6 +21,7 @@ void init_field() {
 }
 
 void block_physics(Cell* block) {
+	// SAND
 	if (block[0].type == SAND && block[1].type == EMPTY) {
 		block[0].type = EMPTY;
 		block[1].type = SAND;
@@ -39,6 +40,57 @@ void block_physics(Cell* block) {
 		if (block[1].type == EMPTY) {
 			block[2].type = EMPTY;
 			block[1].type = SAND;
+		}
+	}
+
+	if (block[0].type == SAND && block[1].type == WATER) {
+		block[0].type = WATER;
+		block[1].type = SAND;
+	}
+	if (block[2].type == SAND && block[3].type == WATER) {
+		block[2].type = WATER;
+		block[3].type = SAND;
+	}
+	if (block[0].type == SAND && block[1].type == SAND) {
+		if (block[3].type == WATER) {
+			block[0].type = WATER;
+			block[3].type = SAND;
+		}
+	}
+	if (block[2].type == SAND && block[3].type == SAND) {
+		if (block[1].type == WATER) {
+			block[2].type = WATER;
+			block[1].type = SAND;
+		}
+	}
+
+	// WATER
+	if (block[0].type == WATER && block[1].type == EMPTY) {
+		block[0].type = EMPTY;
+		block[1].type = WATER;
+	}
+	if (block[2].type == WATER && block[3].type == EMPTY) {
+		block[2].type = EMPTY;
+		block[3].type = WATER;
+	}
+	if (block[0].type == WATER && block[1].type == WATER || block[0].type == WATER && block[1].type == SAND) {
+		if (block[3].type == EMPTY) {
+			block[0].type = EMPTY;
+			block[2].type = WATER;
+		}
+		else if (block[2].type == EMPTY) {
+			block[2].type = WATER;
+			block[0].type = EMPTY;
+		}
+	}
+	else if (block[2].type == WATER && block[3].type == WATER || block[2].type == WATER && block[3].type == SAND) {
+		if (block[1].type == EMPTY) {
+			block[2].type = EMPTY;
+			block[1].type = WATER;
+		}
+		else if (block[0].type == EMPTY) {
+			block[2].type = EMPTY;
+			block[0].type = WATER;
 		}
 	}
 }
@@ -104,6 +156,16 @@ void draw() {
 			field[int(mouse_cell.y)][int(mouse_cell.x)].type = SAND;
 		}
 	}
+	if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) {
+		Vector2 mouse_px = GetMousePosition();
+		mouse_px = { mouse_px.x - w, mouse_px.y - h };
+		// Convert mouse position from pixels to cells
+		Vector2 mouse_cell = { floor(mouse_px.x/cell_size), floor(mouse_px.y/cell_size) };
+		
+		if (int(mouse_cell.y) >= 0 && int(mouse_cell.y) < f_h && int(mouse_cell.x) >= 0 && int(mouse_cell.x) < f_w) {
+			field[int(mouse_cell.y)][int(mouse_cell.x)].type = WATER;
+		}
+	}
 }
 
 Vector2 convert_to_px(Vector2 v) {
@@ -124,6 +186,9 @@ void render_field() {
 			}
 			if (field[y][x].type == SAND) {
 				DrawRectangleV(convert_to_px(temp_pos), v2c_size, BEIGE);
+			}
+			if (field[y][x].type == WATER) {
+				DrawRectangleV(convert_to_px(temp_pos), v2c_size, BLUE);
 			}
 		}
 	}

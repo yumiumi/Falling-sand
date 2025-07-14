@@ -4,12 +4,13 @@ enum Cell_Type {
 	EMPTY,
 	SAND,
 	BORDER,
+	WATER,
 };
 
-const int f_w = 80; // 160
-const int f_h = 80;
+const int f_w = 70; // 160
+const int f_h = 70;
 
-const int cell_size = 8; // 4
+const int cell_size = 7; // 4
 const int grid_thickness = 1;
 
 struct Cell {
