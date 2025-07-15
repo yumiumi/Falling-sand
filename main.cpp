@@ -7,19 +7,18 @@
 
 using namespace std;
 
-const int scr_w = 700;
-const int scr_h = 900;
+const int scr_w = 800;
+const int scr_h = 1000;
 
 void init_field() {
 	for (int y = 0; y < f_h; y++) {
 		for (int x = 0; x < f_w; x++) {
 			field[y][x].type = EMPTY;
-			field[y][x].color = RAYWHITE;
+			field[y][x].color = BLACK;
 			field[y][x].is_updated = false;
 		}
 	}
 }
-
 
 enum BlockQuadrant {
 	TOP_LEFT = 0,
@@ -29,80 +28,41 @@ enum BlockQuadrant {
 };
 
 void block_physics(Cell* block) {
-	// SAND
-	if (block[TOP_LEFT].type == SAND && block[BOT_LEFT].type == EMPTY) {
-		block[TOP_LEFT].type = EMPTY;
-		block[BOT_LEFT].type = SAND;
+	if (material[block[TOP_LEFT].type].density > material[block[BOT_LEFT].type].density) {
+		std::swap(block[TOP_LEFT], block[BOT_LEFT]);
 	}
-	if (block[TOP_RIGHT].type == SAND && block[BOT_RIGHT].type == EMPTY) {
-		block[TOP_RIGHT].type = EMPTY;
-		block[BOT_RIGHT].type = SAND;
+	if (material[block[TOP_RIGHT].type].density > material[block[BOT_RIGHT].type].density) {
+		std::swap(block[TOP_RIGHT], block[BOT_RIGHT]);
 	}
-	if (block[TOP_LEFT].type == SAND && block[BOT_LEFT].type == SAND) {
-		if (block[BOT_RIGHT].type == EMPTY) {
-			block[TOP_LEFT].type = EMPTY;
-			block[BOT_RIGHT].type = SAND;
+	if (material[block[TOP_LEFT].type].density <= material[block[BOT_LEFT].type].density && block[TOP_LEFT].type != BORDER) {
+		if (material[block[BOT_RIGHT].type].density < material[block[TOP_LEFT].type].density) {
+			std::swap(block[TOP_LEFT], block[BOT_RIGHT]);
 		}
 	}
-	if (block[TOP_RIGHT].type == SAND && block[BOT_RIGHT].type == SAND) {
-		if (block[BOT_LEFT].type == EMPTY) {
-			block[TOP_RIGHT].type = EMPTY;
-			block[BOT_LEFT].type = SAND;
-		}
-	}
-	
-	// SAND phyics with WATER
-	if (block[TOP_LEFT].type == SAND && block[BOT_LEFT].type == WATER) {
-		block[TOP_LEFT].type = WATER;
-		block[BOT_LEFT].type = SAND;
-	}
-	if (block[TOP_RIGHT].type == SAND && block[BOT_RIGHT].type == WATER) {
-		block[TOP_RIGHT].type = WATER;
-		block[BOT_RIGHT].type = SAND;
-	}
-	if (block[TOP_LEFT].type == SAND && block[BOT_LEFT].type == SAND) {
-		if (block[BOT_RIGHT].type == WATER) {
-			block[TOP_LEFT].type = WATER;
-			block[BOT_RIGHT].type = SAND;
-		}
-	}
-	if (block[TOP_RIGHT].type == SAND && block[BOT_RIGHT].type == SAND) {
-		if (block[BOT_LEFT].type == WATER) {
-			block[TOP_RIGHT].type = WATER;
-			block[BOT_LEFT].type = SAND;
+	if (material[block[TOP_RIGHT].type].density <= material[block[BOT_RIGHT].type].density && block[TOP_RIGHT].type != BORDER) {
+		if (material[block[BOT_LEFT].type].density < material[block[TOP_RIGHT].type].density) {
+			std::swap(block[TOP_RIGHT], block[BOT_LEFT]);
 		}
 	}
 
-
-	// WATER
-	if (block[TOP_LEFT].type == WATER && block[BOT_LEFT].type == EMPTY) {
-		block[TOP_LEFT].type = EMPTY;
-		block[BOT_LEFT].type = WATER;
-	}
-	if (block[TOP_RIGHT].type == WATER && block[BOT_RIGHT].type == EMPTY) {
-		block[TOP_RIGHT].type = EMPTY;
-		block[BOT_RIGHT].type = WATER;
-	}
-	if (block[TOP_LEFT].type == WATER && block[BOT_LEFT].type == WATER ||
-		block[TOP_LEFT].type == WATER && block[BOT_LEFT].type == SAND) {
-		if (block[BOT_RIGHT].type == EMPTY) {
-			block[TOP_LEFT].type = EMPTY;
-			block[TOP_RIGHT].type = WATER;
-		}
-		else if (block[TOP_RIGHT].type == EMPTY) {
-			block[TOP_RIGHT].type = WATER;
-			block[TOP_LEFT].type = EMPTY;
+	if (material[block[BOT_LEFT].type].density >= material[block[TOP_LEFT].type].density
+		&& material[block[BOT_RIGHT].type].density >= material[block[TOP_LEFT].type].density
+		&& material[block[TOP_LEFT].type].is_liquid == true) {
+		if (material[block[TOP_RIGHT].type].density < material[block[TOP_LEFT].type].density) {
+			int n = GetRandomValue(1, 100);
+			if (n <= 70) {
+				std::swap(block[TOP_LEFT], block[TOP_RIGHT]);
+			}
 		}
 	}
-	else if (block[TOP_RIGHT].type == WATER && block[BOT_RIGHT].type == WATER || 
-		block[TOP_RIGHT].type == WATER && block[BOT_RIGHT].type == SAND) {
-		if (block[BOT_LEFT].type == EMPTY) {
-			block[TOP_RIGHT].type = EMPTY;
-			block[BOT_LEFT].type = WATER;
-		}
-		else if (block[TOP_LEFT].type == EMPTY) {
-			block[TOP_RIGHT].type = EMPTY;
-			block[TOP_LEFT].type = WATER;
+	else if (material[block[BOT_RIGHT].type].density >= material[block[TOP_RIGHT].type].density
+		&& material[block[BOT_LEFT].type].density >= material[block[TOP_RIGHT].type].density
+		&& material[block[TOP_RIGHT].type].is_liquid == true) {
+		if (material[block[TOP_LEFT].type].density < material[block[TOP_RIGHT].type].density) {
+			int n = GetRandomValue(1, 100);
+			if (n <= 70) {
+				std::swap(block[TOP_RIGHT], block[TOP_LEFT]);
+			}
 		}
 	}
 }
@@ -193,9 +153,9 @@ void render_field() {
 	for (int y = 0; y < f_h; y++) {
 		for (int x = 0; x < f_w; x++) {
 			Vector2 temp_pos = { float(x), float(y) };
-			if (field[y][x].type == EMPTY) {
-				DrawRectangleV(convert_to_px(temp_pos), v2c_size, RAYWHITE);
-			}
+			/*if (field[y][x].type == EMPTY) {
+				DrawRectangleV(convert_to_px(temp_pos), v2c_size, BLACK);
+			}*/
 			if (field[y][x].type == SAND) {
 				DrawRectangleV(convert_to_px(temp_pos), v2c_size, BEIGE);
 			}
@@ -204,11 +164,23 @@ void render_field() {
 			}
 		}
 	}
+
+	for (int x = 0; x <= f_w; x++) {
+		if (x == 0 || x == f_w) {
+			DrawLineV(convert_to_px({ float(x), float(0)}), convert_to_px({float(x), float(f_h)}), GRAY);
+		}
+	}
+	for (int y = 0; y <= f_h; y++) {
+		if (y == 0 || y == f_h) {
+			DrawLineV(convert_to_px({ float(0), float(y)}), convert_to_px({float(f_w), float(y)}), GRAY);
+		}
+	}
+
 }
 
 void render() {
 	BeginDrawing();
-	ClearBackground(WHITE);
+	ClearBackground(BLACK);
 	render_field();
 	EndDrawing();
 }
