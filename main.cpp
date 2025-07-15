@@ -20,77 +20,89 @@ void init_field() {
 	}
 }
 
+
+enum BlockQuadrant {
+	TOP_LEFT = 0,
+	BOT_LEFT = 1,
+	TOP_RIGHT = 2,
+	BOT_RIGHT = 3,
+};
+
 void block_physics(Cell* block) {
 	// SAND
-	if (block[0].type == SAND && block[1].type == EMPTY) {
-		block[0].type = EMPTY;
-		block[1].type = SAND;
+	if (block[TOP_LEFT].type == SAND && block[BOT_LEFT].type == EMPTY) {
+		block[TOP_LEFT].type = EMPTY;
+		block[BOT_LEFT].type = SAND;
 	}
-	if (block[2].type == SAND && block[3].type == EMPTY) {
-		block[2].type = EMPTY;
-		block[3].type = SAND;
+	if (block[TOP_RIGHT].type == SAND && block[BOT_RIGHT].type == EMPTY) {
+		block[TOP_RIGHT].type = EMPTY;
+		block[BOT_RIGHT].type = SAND;
 	}
-	if (block[0].type == SAND && block[1].type == SAND) {
-		if (block[3].type == EMPTY) {
-			block[0].type = EMPTY;
-			block[3].type = SAND;
+	if (block[TOP_LEFT].type == SAND && block[BOT_LEFT].type == SAND) {
+		if (block[BOT_RIGHT].type == EMPTY) {
+			block[TOP_LEFT].type = EMPTY;
+			block[BOT_RIGHT].type = SAND;
 		}
 	}
-	if (block[2].type == SAND && block[3].type == SAND) {
-		if (block[1].type == EMPTY) {
-			block[2].type = EMPTY;
-			block[1].type = SAND;
+	if (block[TOP_RIGHT].type == SAND && block[BOT_RIGHT].type == SAND) {
+		if (block[BOT_LEFT].type == EMPTY) {
+			block[TOP_RIGHT].type = EMPTY;
+			block[BOT_LEFT].type = SAND;
+		}
+	}
+	
+	// SAND phyics with WATER
+	if (block[TOP_LEFT].type == SAND && block[BOT_LEFT].type == WATER) {
+		block[TOP_LEFT].type = WATER;
+		block[BOT_LEFT].type = SAND;
+	}
+	if (block[TOP_RIGHT].type == SAND && block[BOT_RIGHT].type == WATER) {
+		block[TOP_RIGHT].type = WATER;
+		block[BOT_RIGHT].type = SAND;
+	}
+	if (block[TOP_LEFT].type == SAND && block[BOT_LEFT].type == SAND) {
+		if (block[BOT_RIGHT].type == WATER) {
+			block[TOP_LEFT].type = WATER;
+			block[BOT_RIGHT].type = SAND;
+		}
+	}
+	if (block[TOP_RIGHT].type == SAND && block[BOT_RIGHT].type == SAND) {
+		if (block[BOT_LEFT].type == WATER) {
+			block[TOP_RIGHT].type = WATER;
+			block[BOT_LEFT].type = SAND;
 		}
 	}
 
-	if (block[0].type == SAND && block[1].type == WATER) {
-		block[0].type = WATER;
-		block[1].type = SAND;
-	}
-	if (block[2].type == SAND && block[3].type == WATER) {
-		block[2].type = WATER;
-		block[3].type = SAND;
-	}
-	if (block[0].type == SAND && block[1].type == SAND) {
-		if (block[3].type == WATER) {
-			block[0].type = WATER;
-			block[3].type = SAND;
-		}
-	}
-	if (block[2].type == SAND && block[3].type == SAND) {
-		if (block[1].type == WATER) {
-			block[2].type = WATER;
-			block[1].type = SAND;
-		}
-	}
 
 	// WATER
-	if (block[0].type == WATER && block[1].type == EMPTY) {
-		block[0].type = EMPTY;
-		block[1].type = WATER;
+	if (block[TOP_LEFT].type == WATER && block[BOT_LEFT].type == EMPTY) {
+		block[TOP_LEFT].type = EMPTY;
+		block[BOT_LEFT].type = WATER;
 	}
-	if (block[2].type == WATER && block[3].type == EMPTY) {
-		block[2].type = EMPTY;
-		block[3].type = WATER;
+	if (block[TOP_RIGHT].type == WATER && block[BOT_RIGHT].type == EMPTY) {
+		block[TOP_RIGHT].type = EMPTY;
+		block[BOT_RIGHT].type = WATER;
 	}
-	if (block[0].type == WATER && block[1].type == WATER || block[0].type == WATER && block[1].type == SAND) {
-		if (block[3].type == EMPTY) {
-			block[0].type = EMPTY;
-			block[2].type = WATER;
+	if (block[TOP_LEFT].type == WATER && block[BOT_LEFT].type == WATER ||
+		block[TOP_LEFT].type == WATER && block[BOT_LEFT].type == SAND) {
+		if (block[BOT_RIGHT].type == EMPTY) {
+			block[TOP_LEFT].type = EMPTY;
+			block[TOP_RIGHT].type = WATER;
 		}
-		else if (block[2].type == EMPTY) {
-			block[2].type = WATER;
-			block[0].type = EMPTY;
+		else if (block[TOP_RIGHT].type == EMPTY) {
+			block[TOP_RIGHT].type = WATER;
+			block[TOP_LEFT].type = EMPTY;
 		}
 	}
-	else if (block[2].type == WATER && block[3].type == WATER || block[2].type == WATER && block[3].type == SAND) {
-		if (block[1].type == EMPTY) {
-			block[2].type = EMPTY;
-			block[1].type = WATER;
+	else if (block[TOP_RIGHT].type == WATER && block[BOT_RIGHT].type == WATER || 
+		block[TOP_RIGHT].type == WATER && block[BOT_RIGHT].type == SAND) {
+		if (block[BOT_LEFT].type == EMPTY) {
+			block[TOP_RIGHT].type = EMPTY;
+			block[BOT_LEFT].type = WATER;
 		}
-		else if (block[0].type == EMPTY) {
-			block[2].type = EMPTY;
-			block[0].type = WATER;
+		else if (block[TOP_LEFT].type == EMPTY) {
+			block[TOP_RIGHT].type = EMPTY;
+			block[TOP_LEFT].type = WATER;
 		}
 	}
 }
