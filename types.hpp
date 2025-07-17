@@ -7,10 +7,10 @@ enum Cell_Type {
 	WATER,
 };
 
-const int f_w = 160; // 160
-const int f_h = 120;
+const int f_w = 200; // 160
+const int f_h = 140;
 
-const int cell_size = 4; // 4
+const int cell_size = 5; // 4
 const int grid_thickness = 1;
 
 struct Cell_Material {

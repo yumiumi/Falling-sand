@@ -4,11 +4,13 @@
 #include <vector>
 #include <cassert>
 #include "types.hpp"
+#include "imgui.h"
+#include "rlImGui.h"
 
 using namespace std;
 
-const int scr_w = 800;
-const int scr_h = 1000;
+const int scr_w = 1920;
+const int scr_h = 1080;
 
 void init_field() {
 	for (int y = 0; y < f_h; y++) {
@@ -181,6 +183,27 @@ void render_field() {
 void render() {
 	BeginDrawing();
 	ClearBackground(BLACK);
+// start ImGui Conent
+		rlImGuiBegin();
+
+		// show ImGui Content
+		bool open = true;
+		ImGui::ShowDemoWindow(&open);
+
+		open = true;
+		if (ImGui::Begin("Test Window", &open))
+		{
+			ImGui::TextUnformatted(ICON_FA_JEDI);
+			ImGui::Text("Welcome to fucking Falling Sands Motherfucker.");
+			for (int i = 0; i < 4; i++) {
+				ImGui::Text("Is_Liquid: %d", material[i].is_liquid);
+			}
+		}
+		ImGui::End();
+
+		// end ImGui Content
+		rlImGuiEnd();
+
 	render_field();
 	EndDrawing();
 }
@@ -191,6 +214,7 @@ int main() {
 	init_field();
 
 	SetTargetFPS(60);
+	rlImGuiSetup(true);
 
 	while (!WindowShouldClose()) {
 		draw();
