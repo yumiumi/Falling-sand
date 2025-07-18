@@ -1,9 +1,9 @@
 #pragma once
 
 enum Cell_Type {
+	BORDER,
 	EMPTY,
 	SAND,
-	BORDER,
 	WATER,
 };
 
@@ -16,20 +16,22 @@ const int grid_thickness = 1;
 struct Cell_Material {
 	float density;
 	bool is_liquid = false;
+	bool is_static = false;
 };
 
 Cell_Material material[4] = {
 	{
-		// material[0] = EMPTY
+		// material[0] = BORDER
+		.density = 999.f,
+		.is_static = true,
+	},
+	{
+		// material[1] = EMPTY
 		.density = 0.f,
 	},
 	{
-		// material[1] = SAND
+		// material[2] = SAND
 		.density = 1.5f,
-	},
-	{
-		// material[2] = BORDER
-		.density = 999.f,
 	},
 	{
 		// material[3] = WATER

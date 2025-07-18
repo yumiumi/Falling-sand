@@ -29,21 +29,27 @@ enum BlockQuadrant {
 	BOT_RIGHT = 3,
 };
 
+void swap_cell(Cell* block, int a, int b) {
+	if (material[block[a].type].is_static == false && material[block[b].type].is_static == false) {
+		std::swap(block[a], block[b]);
+	}
+}
+
 void block_physics(Cell* block) {
 	if (material[block[TOP_LEFT].type].density > material[block[BOT_LEFT].type].density) {
-		std::swap(block[TOP_LEFT], block[BOT_LEFT]);
+		swap_cell(block, TOP_LEFT, BOT_LEFT);
 	}
 	if (material[block[TOP_RIGHT].type].density > material[block[BOT_RIGHT].type].density) {
-		std::swap(block[TOP_RIGHT], block[BOT_RIGHT]);
+		swap_cell(block, TOP_RIGHT, BOT_RIGHT);
 	}
-	if (material[block[TOP_LEFT].type].density <= material[block[BOT_LEFT].type].density && block[TOP_LEFT].type != BORDER) {
+	if (material[block[TOP_LEFT].type].density <= material[block[BOT_LEFT].type].density) {
 		if (material[block[BOT_RIGHT].type].density < material[block[TOP_LEFT].type].density) {
-			std::swap(block[TOP_LEFT], block[BOT_RIGHT]);
+			swap_cell(block, TOP_LEFT, BOT_RIGHT);
 		}
 	}
-	if (material[block[TOP_RIGHT].type].density <= material[block[BOT_RIGHT].type].density && block[TOP_RIGHT].type != BORDER) {
+	if (material[block[TOP_RIGHT].type].density <= material[block[BOT_RIGHT].type].density) {
 		if (material[block[BOT_LEFT].type].density < material[block[TOP_RIGHT].type].density) {
-			std::swap(block[TOP_RIGHT], block[BOT_LEFT]);
+			swap_cell(block, TOP_RIGHT, BOT_LEFT);
 		}
 	}
 
@@ -53,7 +59,7 @@ void block_physics(Cell* block) {
 		if (material[block[TOP_RIGHT].type].density < material[block[TOP_LEFT].type].density) {
 			int n = GetRandomValue(1, 100);
 			if (n <= 70) {
-				std::swap(block[TOP_LEFT], block[TOP_RIGHT]);
+				swap_cell(block, TOP_LEFT, TOP_RIGHT);
 			}
 		}
 	}
@@ -63,7 +69,7 @@ void block_physics(Cell* block) {
 		if (material[block[TOP_LEFT].type].density < material[block[TOP_RIGHT].type].density) {
 			int n = GetRandomValue(1, 100);
 			if (n <= 70) {
-				std::swap(block[TOP_RIGHT], block[TOP_LEFT]);
+				swap_cell(block,TOP_RIGHT, TOP_LEFT);
 			}
 		}
 	}
@@ -118,8 +124,55 @@ void bc_automaton() {
 }
 
 void draw() {
+	// show ImGui Content
+	bool open = true;
+
+	ImGui::ShowDemoWindow(&open);
+
+	static Cell_Type temp_type;
+
+	open = true;
+	if (ImGui::Begin("Test Window", &open))
+	{
+		// Buttons colors
+		float max_color = 4.f;
+        for (int i = 0; i < max_color; i++)
+        {
+			if (i > 0) {
+				ImGui::SameLine();
+			}
+			if (i == 0) {
+				ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor(80, 80, 80, 255)); // DARKGRAY
+				if (ImGui::Button("Border")) {
+					temp_type = BORDER;
+				}
+			}
+			if (i == 1) {
+				ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor(130, 130, 130, 255)); // GRAY
+				if (ImGui::Button("Empty")) {
+					temp_type = EMPTY;
+				}
+			}
+			if (i == 2) {
+				ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor(211, 176, 131, 255)); // BEIGE
+				if (ImGui::Button("Sand")) {
+					temp_type = SAND;
+				}
+			}
+			if (i == 3) {
+				ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor(0, 121, 241, 255)); // BLUE
+				if (ImGui::Button("Water")) {
+					temp_type = WATER;
+				}
+			}
+            ImGui::PopStyleColor(1);
+        }
+	}
+	ImGui::End();
+
 	float w = scr_w/2 - f_w/2 * cell_size;
 	float h = scr_h/2 - f_h/2 * cell_size;
+
 	if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
 		Vector2 mouse_px = GetMousePosition();
 		mouse_px = { mouse_px.x - w, mouse_px.y - h };
@@ -127,17 +180,12 @@ void draw() {
 		Vector2 mouse_cell = { floor(mouse_px.x/cell_size), floor(mouse_px.y/cell_size) };
 		
 		if (int(mouse_cell.y) >= 0 && int(mouse_cell.y) < f_h && int(mouse_cell.x) >= 0 && int(mouse_cell.x) < f_w) {
-			field[int(mouse_cell.y)][int(mouse_cell.x)].type = SAND;
-		}
-	}
-	if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) {
-		Vector2 mouse_px = GetMousePosition();
-		mouse_px = { mouse_px.x - w, mouse_px.y - h };
-		// Convert mouse position from pixels to cells
-		Vector2 mouse_cell = { floor(mouse_px.x/cell_size), floor(mouse_px.y/cell_size) };
-		
-		if (int(mouse_cell.y) >= 0 && int(mouse_cell.y) < f_h && int(mouse_cell.x) >= 0 && int(mouse_cell.x) < f_w) {
-			field[int(mouse_cell.y)][int(mouse_cell.x)].type = WATER;
+			if (temp_type == EMPTY && field[int(mouse_cell.y)][int(mouse_cell.x)].type != EMPTY) {
+				field[int(mouse_cell.y)][int(mouse_cell.x)].type = temp_type;
+			}
+			else if (temp_type != EMPTY && field[int(mouse_cell.y)][int(mouse_cell.x)].type == EMPTY) {
+				field[int(mouse_cell.y)][int(mouse_cell.x)].type = temp_type;
+			}
 		}
 	}
 }
@@ -155,14 +203,14 @@ void render_field() {
 	for (int y = 0; y < f_h; y++) {
 		for (int x = 0; x < f_w; x++) {
 			Vector2 temp_pos = { float(x), float(y) };
-			/*if (field[y][x].type == EMPTY) {
-				DrawRectangleV(convert_to_px(temp_pos), v2c_size, BLACK);
-			}*/
 			if (field[y][x].type == SAND) {
 				DrawRectangleV(convert_to_px(temp_pos), v2c_size, BEIGE);
 			}
 			if (field[y][x].type == WATER) {
 				DrawRectangleV(convert_to_px(temp_pos), v2c_size, BLUE);
+			}
+			if (field[y][x].type == BORDER) {
+				DrawRectangleV(convert_to_px(temp_pos), v2c_size, DARKGRAY);
 			}
 		}
 	}
@@ -177,32 +225,11 @@ void render_field() {
 			DrawLineV(convert_to_px({ float(0), float(y)}), convert_to_px({float(f_w), float(y)}), GRAY);
 		}
 	}
-
 }
 
 void render() {
-	BeginDrawing();
-	ClearBackground(BLACK);
-// start ImGui Conent
-		rlImGuiBegin();
-
-		// show ImGui Content
-		bool open = true;
-		ImGui::ShowDemoWindow(&open);
-
-		open = true;
-		if (ImGui::Begin("Test Window", &open))
-		{
-			ImGui::TextUnformatted(ICON_FA_JEDI);
-			ImGui::Text("Welcome to fucking Falling Sands Motherfucker.");
-			for (int i = 0; i < 4; i++) {
-				ImGui::Text("Is_Liquid: %d", material[i].is_liquid);
-			}
-		}
-		ImGui::End();
-
-		// end ImGui Content
-		rlImGuiEnd();
+	// end ImGui Content
+	rlImGuiEnd();
 
 	render_field();
 	EndDrawing();
@@ -217,6 +244,11 @@ int main() {
 	rlImGuiSetup(true);
 
 	while (!WindowShouldClose()) {
+	BeginDrawing();
+	ClearBackground(BLACK);
+		// start ImGui Conent
+		rlImGuiBegin();
+
 		draw();
 		bc_automaton();
 		render();
